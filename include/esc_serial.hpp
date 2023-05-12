@@ -44,6 +44,7 @@ class MessageHeader {
 class Message {
  public:
   struct Payload {};
+  Payload payload_;
   static constexpr msg_id_t MSG_ID = 0;
   static constexpr msg_size_t MSG_SIZE = 0;
   Message() {}
@@ -59,7 +60,6 @@ class Message {
 
  protected:
   MessageHeader header_;
-  Payload payload_;
 };
 
 class InvalidMessage {
@@ -72,6 +72,7 @@ class ActuatorControlsMessage : public Message {
   struct Payload {
     uint16_t pwm[8];
   };
+  Payload payload_;
   static constexpr msg_id_t MSG_ID = 1;
   static constexpr msg_size_t MSG_SIZE = sizeof(Payload);
   ActuatorControlsMessage() : Message(MSG_ID, MSG_SIZE) {}
@@ -93,9 +94,6 @@ class ActuatorControlsMessage : public Message {
     Serializer serializer(_buffer);
     serializer.Deserialize<uint16_t, ARRAY_LENGTH(payload_.pwm)>(payload_.pwm);
   }
-
- protected:
-  Payload payload_;
 };
 
 class BatteryVoltageMessage : public Message {
@@ -103,6 +101,7 @@ class BatteryVoltageMessage : public Message {
   struct Payload {
     uint16_t voltage_mv;
   };
+  Payload payload_;
   static constexpr msg_id_t MSG_ID = 2;
   static constexpr msg_size_t MSG_SIZE = sizeof(Payload);
   BatteryVoltageMessage() : Message(MSG_ID, MSG_SIZE) {}
@@ -125,7 +124,6 @@ class BatteryVoltageMessage : public Message {
   }
 
  protected:
-  Payload payload_;
 };
 
 class Packet {
@@ -143,6 +141,7 @@ class Packet {
   void Reset();
   const uint8_t* PayloadStart() const { return buffer_ + kPayloadOffset; }
   uint8_t* MutablePayloadStart() { return buffer_ + kPayloadOffset; }
+  const uint8_t* Data() const { return buffer_; }
 
  private:
   static constexpr int kCobsOverhead = 2;
