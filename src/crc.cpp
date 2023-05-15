@@ -57,7 +57,7 @@ const uint32_t crc32_tab[] = {
 uint32_t crc32(const uint8_t *_data, size_t _length) {
   uint32_t crc = ~0U;
   while (_length--) {
-    crc = crc32_tab[(crc ^ *(_data++) & 0xFF)] ^ (crc >> 8);
+    crc = crc32_tab[(crc ^ *_data++) & 0xFF] ^ (crc >> 8);
   }
   return crc ^ ~0U;
 }
