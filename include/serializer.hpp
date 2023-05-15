@@ -75,6 +75,26 @@ inline typename UintBuffer<double>::Type HostToLittleEndian(double _data) {
   return HostToLittleEndianUintBuffer<ReturnType>(buf);
 }
 
+template <>
+inline typename UintBuffer<uint8_t>::Type HostToLittleEndian(uint8_t _data) {
+  return HostToLittleEndianUintBuffer<uint8_t>(_data);
+}
+
+template <>
+inline typename UintBuffer<uint16_t>::Type HostToLittleEndian(uint16_t _data) {
+  return HostToLittleEndianUintBuffer<uint16_t>(_data);
+}
+
+template <>
+inline typename UintBuffer<uint32_t>::Type HostToLittleEndian(uint32_t _data) {
+  return HostToLittleEndianUintBuffer<uint32_t>(_data);
+}
+
+template <>
+inline typename UintBuffer<uint64_t>::Type HostToLittleEndian(uint64_t _data) {
+  return HostToLittleEndianUintBuffer<uint64_t>(_data);
+}
+
 template <typename T>
 T LittleEndianToHostUintBuffer(T);
 
