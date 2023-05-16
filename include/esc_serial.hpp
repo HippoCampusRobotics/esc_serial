@@ -9,6 +9,10 @@
 
 namespace impl {}  // namespace impl
 #define ARRAY_LENGTH(x) (sizeof(x) / sizeof(x[0]))
+#define UNUSED(x) \
+  do {            \
+    (void)(x);    \
+  } while (0)
 
 typedef uint8_t msg_size_t;
 typedef uint8_t msg_id_t;
@@ -57,10 +61,14 @@ class Message {
   MessageHeader& Header() { return header_; }
   virtual size_t SerializePayload(uint8_t* _buffer,
                                   size_t _buffer_length) const {
+    UNUSED(_buffer);
+    UNUSED(_buffer_length);
     return 0;
   }
   virtual size_t DeserializePayload(const uint8_t* _buffer,
                                     size_t _buffer_length) {
+    UNUSED(_buffer);
+    UNUSED(_buffer_length);
     return 0;
   }
   virtual size_t Serialize(uint8_t* _buffer, size_t _buffer_length) {
@@ -103,7 +111,7 @@ class ActuatorControlsMessage : public Message {
   ActuatorControlsMessage() : Message(MSG_ID, MSG_SIZE) {}
 
   inline size_t SerializePayload(uint8_t* _buffer,
-                               size_t _buffer_length) const override {
+                                 size_t _buffer_length) const override {
     if (_buffer_length < MSG_SIZE) {
       return 0;
     }
@@ -113,7 +121,7 @@ class ActuatorControlsMessage : public Message {
   }
 
   inline size_t DeserializePayload(const uint8_t* _buffer,
-                                 size_t _buffer_length) override {
+                                   size_t _buffer_length) override {
     if (_buffer_length < MSG_SIZE) {
       return 0;
     }
@@ -134,7 +142,7 @@ class BatteryVoltageMessage : public Message {
   BatteryVoltageMessage() : Message(MSG_ID, MSG_SIZE) {}
 
   inline size_t SerializePayload(uint8_t* _buffer,
-                               size_t _buffer_length) const override {
+                                 size_t _buffer_length) const override {
     if (_buffer_length < MSG_SIZE) {
       return 0;
     }
@@ -143,7 +151,7 @@ class BatteryVoltageMessage : public Message {
     return serializer.ByteCount();
   }
   inline size_t DeserializePayload(const uint8_t* _buffer,
-                                 size_t _buffer_length) override {
+                                   size_t _buffer_length) override {
     if (_buffer_length != MSG_SIZE) {
       return 0;
     }
