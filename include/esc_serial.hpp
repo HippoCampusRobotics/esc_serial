@@ -20,15 +20,17 @@ class MessageHeader {
     msg_id_t msg_id{0};
   };
   static constexpr msg_size_t HEADER_SIZE = sizeof(Header);
-  void Serialize(uint8_t* _buffer) {
+  size_t Serialize(uint8_t* _buffer) {
     Serializer serializer(_buffer);
     serializer.Serialize(header_.msg_size);
     serializer.Serialize(header_.msg_id);
+    return serializer.ByteCount();
   }
-  void Deserialize(const uint8_t* _buffer) {
+  size_t Deserialize(const uint8_t* _buffer) {
     Serializer serializer(_buffer);
     serializer.Deserialize(header_.msg_size);
     serializer.Deserialize(header_.msg_id);
+    return serializer.ByteCount();
   }
   inline void SetMsgSize(msg_size_t _msg_size) { header_.msg_size = _msg_size; }
   inline void SetMsgId(msg_id_t _msg_id) { header_.msg_id = _msg_id; }
@@ -53,10 +55,33 @@ class Message {
     header_.SetMsgSize(_msg_size);
   }
   MessageHeader& Header() { return header_; }
-  virtual inline void SerializePayload(uint8_t* _buffer,
-                                       size_t _buffer_length) const {};
-  virtual inline void DeserializePayload(const uint8_t* _buffer,
-                                         size_t _buffer_length){};
+  virtual size_t SerializePayload(uint8_t* _buffer,
+                                  size_t _buffer_length) const {
+    return 0;
+  }
+  virtual size_t DeserializePayload(const uint8_t* _buffer,
+                                    size_t _buffer_length) {
+    return 0;
+  }
+  virtual size_t Serialize(uint8_t* _buffer, size_t _buffer_length) {
+    if ((size_t)Header().HEADER_SIZE + Header().MsgSize() > _buffer_length) {
+      return 0;
+    }
+    size_t size = 0;
+    size += Header().Serialize(_buffer);
+    _buffer += size;
+    size += SerializePayload(_buffer, _buffer_length - Header().HEADER_SIZE);
+    return size;
+  }
+  virtual size_t Deserialize(const uint8_t* _buffer, size_t _buffer_length) {
+    size_t size = Header().Deserialize(_buffer);
+    // check for potential buffer overflow
+    if (Header().MsgSize() > _buffer_length - size) {
+      return 0;
+    }
+    size += DeserializePayload(_buffer + size, _buffer_length - size);
+    return size;
+  }
 
  protected:
   MessageHeader header_;
@@ -77,22 +102,24 @@ class ActuatorControlsMessage : public Message {
   static constexpr msg_size_t MSG_SIZE = sizeof(Payload);
   ActuatorControlsMessage() : Message(MSG_ID, MSG_SIZE) {}
 
-  inline void SerializePayload(uint8_t* _buffer,
+  inline size_t SerializePayload(uint8_t* _buffer,
                                size_t _buffer_length) const override {
-    if (_buffer_length < sizeof(Payload)) {
-      return;
+    if (_buffer_length < MSG_SIZE) {
+      return 0;
     }
     Serializer serializer(_buffer);
     serializer.Serialize<uint16_t, ARRAY_LENGTH(payload_.pwm)>(payload_.pwm);
+    return serializer.ByteCount();
   }
 
-  inline void DeserializePayload(const uint8_t* _buffer,
+  inline size_t DeserializePayload(const uint8_t* _buffer,
                                  size_t _buffer_length) override {
-    if (_buffer_length != sizeof(Payload)) {
-      return;
+    if (_buffer_length < MSG_SIZE) {
+      return 0;
     }
     Serializer serializer(_buffer);
     serializer.Deserialize<uint16_t, ARRAY_LENGTH(payload_.pwm)>(payload_.pwm);
+    return serializer.ByteCount();
   }
 };
 
@@ -106,21 +133,23 @@ class BatteryVoltageMessage : public Message {
   static constexpr msg_size_t MSG_SIZE = sizeof(Payload);
   BatteryVoltageMessage() : Message(MSG_ID, MSG_SIZE) {}
 
-  inline void SerializePayload(uint8_t* _buffer,
+  inline size_t SerializePayload(uint8_t* _buffer,
                                size_t _buffer_length) const override {
     if (_buffer_length < MSG_SIZE) {
-      return;
+      return 0;
     }
     Serializer serializer(_buffer);
     serializer.Serialize<uint16_t>(payload_.voltage_mv);
+    return serializer.ByteCount();
   }
-  inline void DeserializePayload(const uint8_t* _buffer,
+  inline size_t DeserializePayload(const uint8_t* _buffer,
                                  size_t _buffer_length) override {
     if (_buffer_length != MSG_SIZE) {
-      return;
+      return 0;
     }
     Serializer serializer(_buffer);
     serializer.Deserialize<uint16_t>(payload_.voltage_mv);
+    return serializer.ByteCount();
   }
 
  protected:
@@ -133,6 +162,8 @@ class Packet {
   bool CompletelyReceived() { return complete_; }
   bool AddByte(const uint8_t byte);
   void Packetize();
+  size_t PayloadCapacity() const { return kBufferSize - kTotalOverhead; }
+  size_t PayloadSize() const { return Size() - kTotalOverhead; }
   // bool SetPayload(const uint8_t* _payload, int _length);
   // uint8_t* MutablePayload() { return buffer_ + kPayloadOffset; }
   // const uint8_t* Data() const { return buffer_; }
@@ -144,12 +175,12 @@ class Packet {
   const uint8_t* Data() const { return buffer_; }
 
  private:
-  static constexpr int kCobsOverhead = 2;
-  static constexpr int kPayloadOffset = 1;
-  static constexpr int kCrcOverhead = sizeof(uint32_t);
-  static constexpr int kTotalOverhead = kCobsOverhead + kCrcOverhead;
-  static constexpr int kBufferSize{256};
-  static constexpr int kPayloadMinSize = MessageHeader::HEADER_SIZE;
+  static constexpr size_t kCobsOverhead = 2;
+  static constexpr size_t kPayloadOffset = 1;
+  static constexpr size_t kCrcOverhead = sizeof(uint32_t);
+  static constexpr size_t kTotalOverhead = kCobsOverhead + kCrcOverhead;
+  static constexpr size_t kBufferSize{256};
+  static constexpr size_t kPayloadMinSize = MessageHeader::HEADER_SIZE;
   void WriteCrc();
   inline uint32_t ReadCrc() {
     Serializer serializer(buffer_ + kPayloadOffset + PayloadSize());
@@ -159,7 +190,6 @@ class Packet {
   }
   bool CrcOk();
   bool Decode();
-  int PayloadSize() const { return Size() - kTotalOverhead; }
   const uint8_t* CrcStart() const { return PayloadStart() + PayloadSize(); }
   uint8_t* MutableCrcStart() { return MutablePayloadStart() + PayloadSize(); }
   uint8_t buffer_[kBufferSize];

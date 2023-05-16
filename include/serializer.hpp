@@ -217,6 +217,10 @@ class Serializer {
     }
   }
 
+  inline size_t ByteCount() const {
+    return position_;
+  }
+
  private:
   uint8_t *buf_;
   const uint8_t *const_buf_;
