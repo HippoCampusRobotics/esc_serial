@@ -1,0 +1,13 @@
+{
+    "$schema": "https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/schema/library.json",
+    "name": "esc_serial",
+    "version": "1.0.0",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/HippoCampusRobotics/esc_serial.git"
+    },
+    "build": {
+        "srcDir": "./src",
+        "includeDir": "./include"
+    }
+}
