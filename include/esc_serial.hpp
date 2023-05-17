@@ -106,7 +106,7 @@ class ActuatorControlsMessage : public Message {
   };
   Payload payload_;
   static constexpr msg_id_t MSG_ID = 1;
-  static constexpr msg_size_t MSG_SIZE = sizeof(Payload);
+  static constexpr msg_size_t MSG_SIZE = sizeof(uint16_t) * 8;
   ActuatorControlsMessage() : Message(MSG_ID, MSG_SIZE) {}
 
   inline size_t SerializePayload(uint8_t* _buffer,
@@ -137,7 +137,7 @@ class BatteryVoltageMessage : public Message {
   };
   Payload payload_;
   static constexpr msg_id_t MSG_ID = 2;
-  static constexpr msg_size_t MSG_SIZE = sizeof(Payload);
+  static constexpr msg_size_t MSG_SIZE = sizeof(uint16_t);
   BatteryVoltageMessage() : Message(MSG_ID, MSG_SIZE) {}
 
   inline size_t SerializePayload(uint8_t* _buffer,
