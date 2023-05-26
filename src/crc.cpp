@@ -1,5 +1,5 @@
 #include "crc.hpp"
-
+namespace esc_serial {
 /**
  * @brief CRC32 Ethernet table.
  * POLY: 0xEDB88320 (reversed)
@@ -59,4 +59,5 @@ uint32_t crc32(const uint8_t *_data, size_t _length) {
     crc = crc32_tab[(crc ^ *_data++) & 0xFF] ^ (crc >> 8);
   }
   return crc ^ ~0U;
+}
 }

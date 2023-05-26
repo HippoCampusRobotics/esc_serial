@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include <string.h>
-
+namespace esc_serial {
 namespace impl {
 template <typename T>
 void Put(uint8_t *_buffer, size_t _offset, T _data) {
@@ -62,3 +62,4 @@ class Serializer {
   const uint8_t *const_buf_;
   size_t position_;
 };
+}

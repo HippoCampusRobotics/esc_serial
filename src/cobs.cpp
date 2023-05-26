@@ -1,5 +1,5 @@
 #include "cobs.hpp"
-
+namespace esc_serial {
 void cobs_encode(uint8_t *_buffer, int _length) {
   _buffer[0] = 0;
   _buffer[_length - 1] = 0;
@@ -21,6 +21,7 @@ uint8_t *cobs_decode(uint8_t *_buffer, int _length) {
   int next_zero = _buffer[0];
   while (true) {
     i += next_zero;
+    // last zero should be the zero delimiter which is at (_length - 1)
     if (i >= _length) {
       return nullptr;
     }
@@ -31,4 +32,5 @@ uint8_t *cobs_decode(uint8_t *_buffer, int _length) {
     }
     _buffer[i] = 0;
   }
+}
 }

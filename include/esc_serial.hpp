@@ -6,7 +6,8 @@
 #include "crc.hpp"
 #include "serializer.hpp"
 
-namespace impl {}  // namespace impl
+namespace esc_serial{
+
 #define ARRAY_LENGTH(x) (sizeof(x) / sizeof(x[0]))
 #define UNUSED(x) \
   do {            \
@@ -22,7 +23,7 @@ class MessageHeader {
     msg_size_t msg_size{0};
     msg_id_t msg_id{0};
   };
-  static constexpr msg_size_t HEADER_SIZE = sizeof(Header);
+  static constexpr msg_size_t HEADER_SIZE = sizeof(msg_size_t) + sizeof(msg_id_t);
   size_t Serialize(uint8_t* _buffer) {
     Serializer serializer(_buffer);
     serializer.Serialize(header_.msg_size);
@@ -83,7 +84,7 @@ class Message {
   virtual size_t Deserialize(const uint8_t* _buffer, size_t _buffer_length) {
     size_t size = Header().Deserialize(_buffer);
     // check for potential buffer overflow
-    if (Header().MsgSize() > _buffer_length - size) {
+    if (Header().MsgSize() + size > _buffer_length) {
       return 0;
     }
     size += DeserializePayload(_buffer + size, _buffer_length - size);
@@ -165,16 +166,17 @@ class BatteryVoltageMessage : public Message {
 class Packet {
  public:
   static constexpr uint8_t kDelimiter{0};
+  bool HasMinimumLength() { return !(Size() < kTotalOverhead + MessageHeader::HEADER_SIZE); }
   msg_id_t ParseMessage();
   bool CompletelyReceived() { return complete_; }
   bool AddByte(const uint8_t byte);
   void Packetize();
   size_t PayloadCapacity() const { return kBufferSize - kTotalOverhead; }
-  size_t PayloadSize() const { return Size() - kTotalOverhead; }
+  size_t PayloadSize() const { return Size() > kTotalOverhead ? Size() - kTotalOverhead : 0; }
   // bool SetPayload(const uint8_t* _payload, int _length);
   // uint8_t* MutablePayload() { return buffer_ + kPayloadOffset; }
   // const uint8_t* Data() const { return buffer_; }
-  int Size() const { return size_; }
+  size_t Size() const { return size_; }
   void SetPayloadSize(uint8_t _size) { size_ = _size + kTotalOverhead; }
   void Reset();
   const uint8_t* PayloadStart() const { return buffer_ + kPayloadOffset; }
@@ -202,6 +204,8 @@ class Packet {
   uint8_t buffer_[kBufferSize];
   uint8_t* write_pointer_ = buffer_;
   const uint8_t* buffer_end_ = buffer_ + kBufferSize;
-  int size_{0};
+  size_t size_{0};
   bool complete_{false};
 };
+
+}

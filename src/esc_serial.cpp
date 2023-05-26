@@ -1,10 +1,13 @@
 #include "esc_serial.hpp"
 
 #include "cobs.hpp"
-
+namespace esc_serial {
 msg_id_t Packet::ParseMessage() {
   // make sure we have a complete packet
   if (!CompletelyReceived()) {
+    return InvalidMessage::MSG_ID;
+  }
+  if (!HasMinimumLength()) {
     return InvalidMessage::MSG_ID;
   }
   // cobs decode the packet
@@ -25,22 +28,22 @@ msg_id_t Packet::ParseMessage() {
   msg.Header().Deserialize(_buffer);
 
   // unlikely to happen. a transmission error would have caused the crc to fail.
-  // this means, either we have an implementation error in writing or reading
+  // this means, we have an implementation error in writing or reading
   // the message.
-  if (msg.Header().MsgSize() != (PayloadSize() - msg.Header().HEADER_SIZE)) {
+  if ((size_t)(msg.Header().MsgSize() + msg.Header().HEADER_SIZE) !=
+      PayloadSize()) {
     return InvalidMessage::MSG_ID;
   }
   return msg.Header().MsgId();
-
 }
 
 bool Packet::AddByte(const uint8_t _byte) {
   if (!complete_ && (write_pointer_ < buffer_end_)) {
+    *write_pointer_++ = _byte;
+    ++size_;
     if (_byte == kDelimiter) {
       complete_ = true;
     }
-    *write_pointer_++ = _byte;
-    ++size_;
     return true;
   }
   return false;
@@ -88,3 +91,4 @@ void Packet::Reset() {
   write_pointer_ = buffer_;
   size_ = 0;
 }
+}  // namespace esc_serial
