@@ -60,4 +60,4 @@ uint32_t crc32(const uint8_t *_data, size_t _length) {
   }
   return crc ^ ~0U;
 }
-}
+}  // namespace esc_serial

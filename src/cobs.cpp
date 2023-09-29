@@ -33,4 +33,4 @@ uint8_t *cobs_decode(uint8_t *_buffer, int _length) {
     _buffer[i] = 0;
   }
 }
-}
+}  // namespace esc_serial

@@ -21,4 +21,4 @@ void cobs_encode(uint8_t *_buffer, int _length);
  * start and the delimiter bye at the end.
  */
 uint8_t *cobs_decode(uint8_t *_buffer, int _length);
-}
+}  // namespace esc_serial

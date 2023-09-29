@@ -6,7 +6,7 @@
 #include "crc.hpp"
 #include "serializer.hpp"
 
-namespace esc_serial{
+namespace esc_serial {
 
 #define ARRAY_LENGTH(x) (sizeof(x) / sizeof(x[0]))
 #define UNUSED(x) \
@@ -23,7 +23,8 @@ class MessageHeader {
     msg_size_t msg_size{0};
     msg_id_t msg_id{0};
   };
-  static constexpr msg_size_t HEADER_SIZE = sizeof(msg_size_t) + sizeof(msg_id_t);
+  static constexpr msg_size_t HEADER_SIZE =
+      sizeof(msg_size_t) + sizeof(msg_id_t);
   size_t Serialize(uint8_t* _buffer) {
     Serializer serializer(_buffer);
     serializer.Serialize(header_.msg_size);
@@ -166,13 +167,17 @@ class BatteryVoltageMessage : public Message {
 class Packet {
  public:
   static constexpr uint8_t kDelimiter{0};
-  bool HasMinimumLength() { return !(Size() < kTotalOverhead + MessageHeader::HEADER_SIZE); }
+  bool HasMinimumLength() {
+    return !(Size() < kTotalOverhead + MessageHeader::HEADER_SIZE);
+  }
   msg_id_t ParseMessage();
   bool CompletelyReceived() { return complete_; }
   bool AddByte(const uint8_t byte);
   void Packetize();
   size_t PayloadCapacity() const { return kBufferSize - kTotalOverhead; }
-  size_t PayloadSize() const { return Size() > kTotalOverhead ? Size() - kTotalOverhead : 0; }
+  size_t PayloadSize() const {
+    return Size() > kTotalOverhead ? Size() - kTotalOverhead : 0;
+  }
   // bool SetPayload(const uint8_t* _payload, int _length);
   // uint8_t* MutablePayload() { return buffer_ + kPayloadOffset; }
   // const uint8_t* Data() const { return buffer_; }
@@ -208,4 +213,4 @@ class Packet {
   bool complete_{false};
 };
 
-}
+}  // namespace esc_serial

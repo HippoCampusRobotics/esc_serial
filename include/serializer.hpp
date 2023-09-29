@@ -62,4 +62,4 @@ class Serializer {
   const uint8_t *const_buf_;
   size_t position_;
 };
-}
+}  // namespace esc_serial
